@@ -1,18 +1,19 @@
-from nytimesarticle import articleAPI
 import csv
 import time
+from nytimesarticle import articleAPI
 
-# Replace your won key here
+
+# Replace your won api key here
 api = articleAPI('db3ffd3f04b740ec9a256d1b2c8cb6c0')
 
 def write_to_csv(result):
-    """ 
-    Write the info of articles to a csv file 
-    Becasue we do known when will the api key exceed the limit
-    So open the csv file as 'a(ppend)'
+    """
+    Write the information of articles to a csv file.
+    Becasue we do not known when will the api key exceed the limit,
+    open the csv file in 'a(ppend)'
     """
 
-    keys = result[0].keys()    
+    keys = result[0].keys()
     with open('news_data.csv', 'a') as output_file:
         dict_writer = csv.DictWriter(output_file, keys)
         dict_writer.writeheader()
@@ -23,12 +24,12 @@ def parse_articles(articles):
     '''
     This function takes in a response to the NYT api and parses
     the articles into a list of dictionaries
-    '''    
+    '''
     news = []
 
     for i in articles['response']['docs']:
 
-        if i['headline']['main'] == '':
+        if i['headline']['main'] == '': # if there is no news available
             break
 
         else:
@@ -38,10 +39,10 @@ def parse_articles(articles):
             dic['url'] = i['web_url']
             news.append(dic)
 
-    return(news)
+    return news
 
 
-def get_articles(query,init_begin,init_end):
+def get_articles(query, init_begin, init_end):
     '''
     This function accepts two dates in string (e.g.'20150721')
     and a keyword (e.g.'Amnesty International', can be blank).
@@ -51,11 +52,7 @@ def get_articles(query,init_begin,init_end):
     done = False
 
     init_begin_year = int(init_begin) / 10000
-    init_begin_mon = (int(init_begin) - init_begin_year * 10000)/100
-    init_begin_day = int(init_begin) % 100
     init_end_year = int(init_end) / 10000
-    init_end_mon = (int(init_end) - init_end_year * 10000)/100
-    init_end_day = int(init_end) % 100
 
     for year in range(init_begin_year, init_end_year + 1):
         for month in range(1, 13):
@@ -74,7 +71,7 @@ def get_articles(query,init_begin,init_end):
                 else:
                     begin_date = end_mon + str(day)
 
-                # skip dates before the target begin date
+                # skip dates that before the target begin date
                 if int(begin_date) < int(init_begin):
                     continue
 
@@ -85,38 +82,39 @@ def get_articles(query,init_begin,init_end):
                 else:
                     end_date = end_mon + str(end_day)
 
-                # skip dates after the target end date
+                # exit when exceed the target end date
                 if int(end_date) > int(init_end):
-                    continue
+                    break
 
                 for i in range(0, 201):  # NYT limits pager to first 200 pages
                     print 'Now querying:', begin_date, i
-                    
+
                     # query without keywords
-                    if query == '': 
+                    if query == '':
                         articles = api.search(
-                               fq = {'source':['Reuters','AP', 'The New York Times']},
-                               begin_date = begin_date,
-                               end_date = end_date,
-                               sort='oldest',
-                               fl = 'web_url, headline, pub_date',
-                               page = str(i))
+                            fq = {'source':['Reuters','AP', 'The New York Times']},
+                            begin_date = begin_date,
+                            end_date = end_date,
+                            sort='oldest',
+                            fl = 'web_url, headline, pub_date',
+                            page = str(i))
+                    
                     # query with keywords
                     else:
-                        articles = api.search(q = query,
-                               fq = {'source':['Reuters','AP', 'The New York Times']},
-                               begin_date = begin_date,
-                               end_date = end_date,
-                               sort='oldest',
-                               fl = 'web_url, headline, pub_date',
-                               page = str(i))
+                        articles = api.search(
+                            q = query,
+                            fq = {'source':['Reuters','AP', 'The New York Times']},
+                            begin_date = begin_date,
+                            end_date = end_date,
+                            sort='oldest',
+                            fl = 'web_url, headline, pub_date',
+                            page = str(i))
 
-                    
                     if 'message' in articles:   # this indicates API limit exceeded
-                        print articles['message']                    
+                        print articles['message']
                         return
 
-                    elif 'response' in articles:
+                    elif 'response' in articles:  # if there is any article available
                         if articles['response']['docs'] != []:
                             articles = parse_articles(articles)
                             all_articles = all_articles + articles
@@ -131,14 +129,14 @@ def get_articles(query,init_begin,init_end):
                     if done:
                         done = False
                         break
+
                 write_to_csv(all_articles)    # output daily
 
-    print "Querying End..."
+    print "Query End..."
 
 def main():
 
-    key_words = ''
-    result_all = []
+    key_words = ''    
     begin_date = '20140110'
     end_date = '20141231'
 
@@ -150,5 +148,4 @@ if __name__ == '__main__':
 
 
     
-
 
