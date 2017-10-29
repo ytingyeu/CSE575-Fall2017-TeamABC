@@ -137,7 +137,7 @@ def get_articles(query, init_begin, init_end):
 def main():
 
     key_words = ''    
-    begin_date = '20140110'
+    begin_date = '20140125'
     end_date = '20141231'
 
     get_articles(key_words, begin_date, end_date)

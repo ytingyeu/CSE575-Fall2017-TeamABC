@@ -31,10 +31,18 @@ def parse_articles(articles):
             continue
 
         else:
+
             dic = {}
             dic['headline'] = item['headline']['main'].encode("utf8")
-            dic['date'] = item['pub_date'] # if cutting time of day, add [0:10]
+            dic['date'] = item['pub_date'][0:16]
             dic['url'] = item['web_url']
+            dic['document_type'] = item['document_type']
+
+            if item['snippet'] is None:
+                dic['snippet'] = []
+            else:
+                dic['snippet'] = item['snippet'].encode("utf8")
+
             news.append(dic)
 
     return news
@@ -43,24 +51,21 @@ def parse_articles(articles):
 def main():
     """
     The main function takes begin/end year to query and parse articles.
-    Also, print the data to a csv file yearly.    
+    Also, print the data to a csv file monthly.
     """
-    #parse_articles(api.query(2014, 8))
 
     begin_year = 2014
-    end_year = 2016    
+    end_year = 2017
 
     for year in range(begin_year, end_year + 1):
-
-        articles_yearly = []
 
         for month in range(1, 13):
 
             print "Now querying", year, month, "..."
+            articles_monthly = []
             articles = parse_articles(api.query(year, month))
-            articles_yearly = articles_yearly + articles
-
-        write_to_csv(articles_yearly)
+            articles_monthly = articles_monthly + articles
+            write_to_csv(articles_monthly)
 
     print "Query ends."
 
